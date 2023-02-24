@@ -21,6 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include "api.h"
 #include "stdio.h"
 #include "string.h"
 /* USER CODE END Includes */
@@ -107,7 +108,6 @@ int var_debug=0;
 char Rx_UART[100];
 unsigned char i,j;
 volatile uint8_t spi1_f=0, spi4_f=0, spi6_f=0, spi2_f=0, spi2t_f=0;
-uint8_t cmdhost[10];
 
 int pData[12],pData1[12],pData2[12],temp_pData[12];
 int16_t frame[16][18],framedata[16][18],baseline[16][18];	//[TX][RX]
@@ -724,8 +724,8 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	int16_t* s16p_buf;
-	uint16_t u16_byteLen;
-
+	uint16_t u16_bufLen;
+	sAfeCmd_t AfeCmd;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -777,92 +777,68 @@ int main(void)
   while (1)
   {
 	  s16p_buf = NULL;
-	  u16_byteLen = 0;
+	  u16_bufLen = 0;
 
-	  //=== DIPAKAI TIM FW ===
+	  // wait command from host
 	  spi2_f = 0;
-	  HAL_SPI_Receive_IT(&hspi2, (uint8_t *)cmdhost, sizeof(cmdhost)/sizeof(int16_t));
-	  while(spi2_f == 0){}
+	  HAL_SPI_Receive_IT(&hspi2,
+		  	  	  	  	 (uint8_t*) &AfeCmd,
+		  	  	  	  	 sizeof(sAfeCmd_t)/sizeof(int16_t));
+	  while(0 == spi2_f) {};
 
-//	  ====== API dari FW ======
-/*
-	  Packet 10 bytes
-	  [W/R CMD Vref Freq nTx numAcc RSV RSV RSV RSV]
-*/
-/*	  cmdhost1 = start scan => 2:Noise, 3:Self Tx, 4:Self Rx, 5:mutual
-	  cmdhost2 = Vref
-	  cmdhost3 = Freq
-	  cmdhost4 = nTx
-	  cmdhost5 = numAcc
-*/
-	  if(2 == cmdhost[1])
+	  // process command
+	  switch (AfeCmd.u8_scanType)
 	  {
-		  Vref_f = cmdhost[2];
-		  //Freq_f = cmdhost[3];
-		  //nTx_f = cmdhost[4];
-		  numAcc_f = cmdhost[5];
+		  case SPI_SCAN_NOISE:
+			  initTx_f = 1; nTx_f = 4;
+			  Run_Scans(0, initTx_f, nTx_f, numAcc_f, Vref_f);
 
-		  initTx_f = 1; nTx_f = 4;
-		  Run_Scans(0, initTx_f, nTx_f, numAcc_f, Vref_f);	//freq nTx numAcc Vref
+			  initTx_f = 5; nTx_f = 8;
+			  Run_Scans(1, initTx_f, nTx_f, numAcc_f, Vref_f);
 
-		  initTx_f = 5; nTx_f = 8;
-		  Run_Scans(1, initTx_f, nTx_f, numAcc_f, Vref_f);	//freq nTx numAcc Vref
+			  initTx_f = 9; nTx_f = 12;
+			  Run_Scans(2, initTx_f, nTx_f, numAcc_f, Vref_f);
 
-		  initTx_f = 9; nTx_f = 12;
-		  Run_Scans(2, initTx_f, nTx_f, numAcc_f, Vref_f);	//freq nTx numAcc Vref
+			  initTx_f = 13; nTx_f = 16;
+			  Run_Scans(3, initTx_f, nTx_f, numAcc_f, Vref_f);
 
-		  initTx_f = 13; nTx_f = 16;
-		  Run_Scans(3, initTx_f, nTx_f, numAcc_f, Vref_f);	//freq nTx numAcc Vref
+			  s16p_buf   = (int16_t*) frame;
+			  u16_bufLen = sizeof(frame);
+			  break;
 
-		  //=== DIPAKAI TIM FW ===
-		  s16p_buf =  (int16_t*)frame;
-		  u16_byteLen = sizeof(frame);
+		  case SPI_SCAN_SELF_TX:
+			  HAL_Delay(5);	// dummy wait
+
+			  s16p_buf   = SelfTx;
+			  u16_bufLen = nTx_f*sizeof(int16_t);
+			  break;
+
+		  case SPI_SCAN_SELF_RX:
+			  HAL_Delay(5);	// dummy wait
+
+			  s16p_buf   = SelfRx;
+			  u16_bufLen = sizeof(SelfRx);
+			  break;
+
+		  case SPI_SCAN_MUTUAL:
+			  initTx_f = 0;
+			  Run_Scans(Freq_f, initTx_f, nTx_f, numAcc_f, Vref_f);
+
+			  s16p_buf =  (int16_t*)frame;
+			  u16_bufLen = sizeof(frame);
+			  break;
+
+		  default:
+			  break;
 	  }
 
-	  else if(3 == cmdhost[1])
-	  {
-		  //Vref_f = cmdhost[2];
-		  //Freq_f = cmdhost[3];
-		  nTx_f = cmdhost[4];
-		  //numAcc_f = cmdhost[5];
-
-		  //=== DIPAKAI TIM FW ===
-		  s16p_buf = SelfTx;
-		  u16_byteLen = nTx_f*sizeof(int16_t);
-	  }
-
-	  else if(4 == cmdhost[1])
-	  {
-		  //Vref_f = cmdhost[2];
-		  //Freq_f = cmdhost[3];
-		  //nTx_f = cmdhost[4];
-		  //numAcc_f = cmdhost[5];
-
-		  //=== DIPAKAI TIM FW ===
-		  s16p_buf = SelfRx;
-		  u16_byteLen = sizeof(SelfRx);
-	  }
-
-	  else if(5 == cmdhost[1])
-	  {
-		  Vref_f = cmdhost[2];
-		  Freq_f = cmdhost[3];
-		  nTx_f = cmdhost[4];
-		  numAcc_f = cmdhost[5];
-		  initTx_f = 0;
-
-		  Run_Scans(Freq_f, initTx_f, nTx_f, numAcc_f, Vref_f);	//freq nTx numAcc Vref
-
-		  //=== DIPAKAI TIM FW ===
-		  s16p_buf =  (int16_t*)frame;
-		  u16_byteLen = sizeof(frame);
-	  }
-
-	  //=== DIPAKAI TIM FW ===
+	  // send scan result
 	  if (NULL != s16p_buf)
 	  {
 		  spi2t_f = 0;
-		  HAL_SPI_Transmit_IT(&hspi2, (uint8_t*) s16p_buf, u16_byteLen/sizeof(int16_t));
+		  HAL_SPI_Transmit_IT(&hspi2,
+			  	  	  	     (uint8_t*) s16p_buf,
+							 u16_bufLen/sizeof(int16_t));
 		  GPIOB->BSRR |= (1<<8);
 		  GPIOB->BSRR |= (1<<24);
 		  while(spi2t_f == 0){}
