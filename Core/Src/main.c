@@ -776,8 +776,8 @@ int main(void)
 
   while (1)
   {
-		s16p_buf = NULL;
-		u16_byteLen = 0;
+	  s16p_buf = NULL;
+	  u16_byteLen = 0;
 
 	  //=== DIPAKAI TIM FW ===
 	  spi2_f = 0;
@@ -802,7 +802,7 @@ int main(void)
 		  //nTx_f = cmdhost[4];
 		  numAcc_f = cmdhost[5];
 
-		  initTx_f = 0; nTx_f = 4;
+		  initTx_f = 1; nTx_f = 4;
 		  Run_Scans(0, initTx_f, nTx_f, numAcc_f, Vref_f);	//freq nTx numAcc Vref
 
 		  initTx_f = 5; nTx_f = 8;
@@ -815,11 +815,11 @@ int main(void)
 		  Run_Scans(3, initTx_f, nTx_f, numAcc_f, Vref_f);	//freq nTx numAcc Vref
 
 		  //=== DIPAKAI TIM FW ===
-			s16p_buf =  (int16_t*)frame;
-			u16_byteLen = sizeof(frame);
+		  s16p_buf =  (int16_t*)frame;
+		  u16_byteLen = sizeof(frame);
 	  }
 
-	  else if(2 == cmdhost[1])
+	  else if(3 == cmdhost[1])
 	  {
 		  //Vref_f = cmdhost[2];
 		  //Freq_f = cmdhost[3];
@@ -827,11 +827,11 @@ int main(void)
 		  //numAcc_f = cmdhost[5];
 
 		  //=== DIPAKAI TIM FW ===
-			s16p_buf = SelfTx;
-			u16_byteLen = nTx_f*sizeof(int16_t);
+		  s16p_buf = SelfTx;
+		  u16_byteLen = nTx_f*sizeof(int16_t);
 	  }
 
-	  else if(3 == cmdhost[1])
+	  else if(4 == cmdhost[1])
 	  {
 		  //Vref_f = cmdhost[2];
 		  //Freq_f = cmdhost[3];
@@ -839,8 +839,8 @@ int main(void)
 		  //numAcc_f = cmdhost[5];
 
 		  //=== DIPAKAI TIM FW ===
-			s16p_buf = SelfRx;
-			u16_byteLen = sizeof(SelfRx);
+		  s16p_buf = SelfRx;
+		  u16_byteLen = sizeof(SelfRx);
 	  }
 
 	  else if(5 == cmdhost[1])
@@ -854,19 +854,19 @@ int main(void)
 		  Run_Scans(Freq_f, initTx_f, nTx_f, numAcc_f, Vref_f);	//freq nTx numAcc Vref
 
 		  //=== DIPAKAI TIM FW ===
-			s16p_buf =  (int16_t*)frame;
-			u16_byteLen = sizeof(frame);
+		  s16p_buf =  (int16_t*)frame;
+		  u16_byteLen = sizeof(frame);
 	  }
 
-		//=== DIPAKAI TIM FW ===
-		if (NULL != s16p_buf)
-		{
-			spi2t_f = 0;
-			HAL_SPI_Transmit_IT(&hspi2, (uint8_t*) s16p_buf, u16_byteLen/sizeof(int16_t));
-			GPIOB->BSRR |= (1<<8);
-			GPIOB->BSRR |= (1<<24);
-			while(spi2t_f == 0){}
-		}
+	  //=== DIPAKAI TIM FW ===
+	  if (NULL != s16p_buf)
+	  {
+		  spi2t_f = 0;
+		  HAL_SPI_Transmit_IT(&hspi2, (uint8_t*) s16p_buf, u16_byteLen/sizeof(int16_t));
+		  GPIOB->BSRR |= (1<<8);
+		  GPIOB->BSRR |= (1<<24);
+		  while(spi2t_f == 0){}
+	  }
 
     /* USER CODE END WHILE */
 
