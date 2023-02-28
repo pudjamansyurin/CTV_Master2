@@ -75,10 +75,10 @@ typedef struct
 typedef struct
 {
 	union {
-		uint8_t u8_data[2];
+		uint8_t u8_data[4];
 		struct {
-			uint8_t u8_isOk;
-			eAFE_CMD u8_cmd;
+			eAFE_CMD u8_cmd;		/* same with corresponding command */
+			uint16_t u16_len;		/* payload's size in half-word */
 		};
 	};
 } sAfeHeader_t;

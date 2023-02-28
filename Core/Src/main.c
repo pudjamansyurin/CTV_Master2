@@ -1033,7 +1033,7 @@ uint16_t Run_Scans(uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint
 		//===========================================================//
 	} while(n++ < o);
 
-	return (TX_LEN * RX_LEN * sizeof(int16_t));
+	return (TX_LEN * RX_LEN);
 }
 
 //NEW Noise Scan
@@ -1197,7 +1197,7 @@ uint16_t Run_NoiseScans(uint8_t nAcc, uint8_t vreff, int16_t* s16p_frame)
 		//===========================================================//
 	} while(n++ < FREQ_CNT);
 
-	return (FREQ_CNT * RX_LEN * sizeof(int16_t));
+	return (FREQ_CNT * RX_LEN);
 }
 
 /* USER CODE END PFP */
@@ -1329,15 +1329,15 @@ int main(void)
 	  }
 
 	  // inject header
-	  AfeReply.header.u8_isOk = (0 < u16_bufLen);
 	  AfeReply.header.u8_cmd  = AfeCmd.u8_cmd;
-	  u16_bufLen += sizeof(sAfeHeader_t);
+	  AfeReply.header.u16_len = u16_bufLen;
+	  u16_bufLen += sizeof(sAfeHeader_t) / sizeof(int16_t);
 
 	  // send scan result
 	  spi2t_f = 0;
 	  HAL_SPI_Transmit_IT(&hspi2,
 		  	  	  	  	  (uint8_t*) &AfeReply,
-						  u16_bufLen / sizeof(int16_t));
+						  u16_bufLen);
 	  GPIOB->BSRR |= (1<<8);
 	  GPIOB->BSRR |= (1<<24);
 	  while(spi2t_f == 0){}
