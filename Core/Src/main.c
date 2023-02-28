@@ -121,8 +121,11 @@ unsigned char i,j;
 volatile uint8_t spi1_f=0, spi4_f=0, spi6_f=0, spi2_f=0, spi2t_f=0;
 
 int pData[12],pData1[12],pData2[12],temp_pData[12];
+
 int16_t frame[(sizeof(sAfeReply_t) + TX_LEN*RX_LEN) / sizeof(int16_t)];
+int16_t frameNoise[4][18];
 int16_t SelfTx[TX_LEN], SelfRx[RX_LEN];
+
 
 char str_Frame[1731]={'*'}; //1+6*16*18+2 -> *+data+&+\n
 #define slave_addr (0x11<<1)
@@ -321,6 +324,84 @@ void Tx100k(int ch)
 
 }
 
+void NTx100k(int ch)
+{
+	uint8_t m=0,n=0,p=0,q=0;
+		portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+	//	portCTRL->BSRR |= (1<<pinCINJNL);
+
+		//WAITING DELAYYY
+		do
+		{
+			asm("NOP");
+		} while(q++<79);
+
+
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+
+
+		portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
+	//	portCTRL->BSRR |= (1<<pinCINJPH);
+		portTX->BSRR |= (1<<pinTXL[ch]);
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+	//	portCTRL->BSRR |= (1<<pinACCPL);//|(1<<pinCINJPL);
+		do
+		{
+			asm("NOP");
+		} while(m++<13);
+		portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
+	//	portCTRL->BSRR |= (1<<pinCINJPL);
+
+		//WAITING DELAYYY
+		do
+		{
+			asm("NOP");
+		} while(p++<79);
+
+
+
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+
+
+
+		portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
+	//	portCTRL->BSRR |= (1<<pinCINJNH);
+		portTX->BSRR |= (1<<pinTXL[ch]);
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+	//	portCTRL->BSRR |= (1<<pinACCNL);//|(1<<pinCINJNL);
+		do
+		{
+			asm("NOP");
+		} while(n++<3);
+
+
+}
+
 void Tx500k(int ch)
 {
 	uint8_t m=0,n=0;
@@ -339,6 +420,66 @@ void Tx500k(int ch)
 	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
 //	portCTRL->BSRR |= (1<<pinCINJPH);
 	portTX->BSRR |= (1<<pinTXH[ch]);
+	asm("NOP");
+	asm("NOP");
+
+//	portCTRL->BSRR |= (1<<pinACCPL);//|(1<<pinCINJPL);
+	do
+	{
+		asm("NOP");
+	} while(m++<13);	//13
+	portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
+//	portCTRL->BSRR |= (1<<pinCINJPL);
+
+
+
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+
+
+
+	portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
+//	portCTRL->BSRR |= (1<<pinCINJNH);
+	portTX->BSRR |= (1<<pinTXL[ch]);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+
+//	portCTRL->BSRR |= (1<<pinACCNL);//|(1<<pinCINJNL);
+	do
+	{
+		asm("NOP");
+	} while(n++<3);	//3
+
+}
+
+void NTx500k(int ch)
+{
+	uint8_t m=0,n=0;
+	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+//	portCTRL->BSRR |= (1<<pinCINJNL);
+
+
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+
+
+	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
+//	portCTRL->BSRR |= (1<<pinCINJPH);
+	portTX->BSRR |= (1<<pinTXL[ch]);
 	asm("NOP");
 	asm("NOP");
 
@@ -414,6 +555,93 @@ void Tx400k(int ch)
 	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
 //	portCTRL->BSRR |= (1<<pinCINJPH);
 	portTX->BSRR |= (1<<pinTXH[ch]);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+//	portCTRL->BSRR |= (1<<pinACCPL);//|(1<<pinCINJPL);
+	do
+	{
+		asm("NOP");
+	} while(m++<13);
+	portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
+//	portCTRL->BSRR |= (1<<pinCINJPL);
+
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(p++<4);
+
+
+
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+
+
+
+	portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
+//	portCTRL->BSRR |= (1<<pinCINJNH);
+	portTX->BSRR |= (1<<pinTXL[ch]);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+//	portCTRL->BSRR |= (1<<pinACCNL);//|(1<<pinCINJNL);
+	do
+	{
+		asm("NOP");
+	} while(n++<3);
+
+
+}
+
+void NTx400k(int ch)
+{
+	uint8_t m=0,n=0,p=0,q=0;
+	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+//	portCTRL->BSRR |= (1<<pinCINJNL);
+
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(q++<4);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+
+
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+
+
+	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
+//	portCTRL->BSRR |= (1<<pinCINJPH);
+	portTX->BSRR |= (1<<pinTXL[ch]);
 	asm("NOP");
 	asm("NOP");
 	asm("NOP");
@@ -546,6 +774,84 @@ void Tx250k(int ch)
 
 }
 
+void NTx250k(int ch)
+{
+	uint8_t m=0,n=0,p=0,q=0;
+	portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+//	portCTRL->BSRR |= (1<<pinCINJNL);
+
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(q++<19);
+
+
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+
+
+	portCTRL->BSRR |= (1<<pinACCPH)|(1<<pinCINJPH);
+//	portCTRL->BSRR |= (1<<pinCINJPH);
+	portTX->BSRR |= (1<<pinTXL[ch]);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+//	portCTRL->BSRR |= (1<<pinACCPL);//|(1<<pinCINJPL);
+	do
+	{
+		asm("NOP");
+	} while(m++<13);
+	portCTRL->BSRR |= (1<<pinACCPL)|(1<<pinCINJPL);
+//	portCTRL->BSRR |= (1<<pinCINJPL);
+
+	//WAITING DELAYYY
+	do
+	{
+		asm("NOP");
+	} while(p++<19);
+
+
+
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+
+
+
+	portCTRL->BSRR |= (1<<pinACCNH)|(1<<pinCINJNH);
+//	portCTRL->BSRR |= (1<<pinCINJNH);
+	portTX->BSRR |= (1<<pinTXL[ch]);
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+	asm("NOP");
+//	portCTRL->BSRR |= (1<<pinACCNL);//|(1<<pinCINJNL);
+	do
+	{
+		asm("NOP");
+	} while(n++<3);
+
+
+}
+
 //NEW RUN SCAN PARENT
 void Run_TX(int freq, int ch)
 {
@@ -555,6 +861,17 @@ void Run_TX(int freq, int ch)
 	case 1: Tx400k(ch); break;
 	case 2: Tx250k(ch); break;
 	default: Tx100k(ch);
+	}
+}
+
+void Run_NoiseTX(int freq, int ch)
+{
+	switch (freq)
+	{
+	case 0:	NTx500k(ch);	break;
+	case 1: NTx400k(ch);	break;
+	case 2: NTx250k(ch);	break;
+	default: NTx100k(ch);
 	}
 }
 
@@ -713,10 +1030,170 @@ void Run_Scans(uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t 
 
 		//=== RESET ACCUMULATOR ===
 		portCTRL->BSRR |= (1<<pinRSTACCH)| (1<<pinCFB1H);// | (1<<pinCFB1H) | (1<<pinCFB2H);	//ACCRST ON PB6
+
 		portMSTR->BSRR |= (1<<pinMSTRL);	//MSTR OFF PC6
 		//portCS->BSRR |= (1<<pinCS2L);	// SS2 OFF PB12
 		//===========================================================//
 	} while(n++ < o);
+}
+
+//NEW Noise Scan
+void Run_NoiseScans(uint8_t nAcc, uint8_t vreff)
+{
+	uint8_t n=0;
+	do
+	{
+		uint8_t m=0;
+		//========================= TX(n) =============================
+
+		GPIOA->BSRR |= (1<<20);
+		GPIOE->BSRR |= (1<<27);
+		GPIOG->BSRR |= (1<<24);
+
+//		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_RESET);
+//		HAL_GPIO_WritePin(CS3_GPIO_Port, CS3_Pin, GPIO_PIN_RESET);
+		//===== SEND TX SIGNAL =====
+		if(vreff == 1) delay_AFE_Init();
+		else delay_AFE_Init1();
+
+//		portRSTACC->BSRR |= (1<<pinRSTACCL);	//RST ACC low
+//		delay1();
+//		delay1();
+//		delay1();
+		delay1();
+		portCTRL->BSRR |= (1<<pinCTVH);	//CTI ON PB7
+		portCTRL->BSRR |= (1<<pinACCPL) | (1<<pinCINJPL);
+		portCTRL->BSRR |= (1<<pinACCNL) | (1<<pinCINJNL);
+		delay1();
+		delay1();
+		delay1();	//expect 10us
+
+		portCTRL->BSRR |= (1<<pinRSTACCL) | (1<<pinCFB1L);
+		//portTX->BSRR |= (1<<pinACCL);
+		do
+		{
+			Run_TX(n,n+1);
+			//portTX->BSRR |= (1<<pinACCL);
+		} while(m++ < nAcc-1);
+		portCTRL->BSRR |= (1<<pinACCNL)|(1<<pinCINJNL);
+//		portCTRL->BSRR |= (1<<pinCINJNL);
+		portCTRL->BSRR |= (1<<pinCTVL);	//CTI OFF
+
+
+
+		//=== SEND READ ADC CMD ===
+		portMSTR->BSRR |= (1<<pinMSTRH);	//MSTR ON PC6-------
+		GPIOB->BSRR |= (1<<11);
+		//HAL_Delay(1);
+//		portMSTR->BSRR |= (1<<pinMSTRL);	//MSTR OFF PC6
+
+		//portCTRL->BSRR |= (1<<pinVREFL);	//Vref
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+
+
+		//=== WAIT ADC COLLECTED ===
+//		while(HAL_GPIO_ReadPin(SLV1_GPIO_Port, SLV1_Pin) == 0 || HAL_GPIO_ReadPin(SLV2_GPIO_Port, SLV2_Pin) == 0){}
+
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+//		asm("NOP");
+
+//		HAL_GPIO_WritePin(RSTACC_GPIO_Port, RSTACC_Pin, GPIO_PIN_SET);
+//		HAL_Delay(3);
+//		HAL_GPIO_WritePin(RSTACC_GPIO_Port, RSTACC_Pin, GPIO_PIN_RESET);
+
+		//=== RECEIVE DATA FROM SPI ===
+		//===========================================================//
+		//portCS->BSRR |= (1<<pinCS1H);	//SS1 ON PB14
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+
+		//while(HAL_SPI_Receive(&hspi2, (uint8_t *)pData1, sizeof(pData1), 1000)!=HAL_OK){HAL_Delay(100);}
+		while(spi1_f == 0){}
+		spi1_f = 0;
+		//-----------------------------------//
+		portCTRL->BSRR |= (1<<pinVREFH);	//Vref
+
+
+		frameNoise[n][0] = pData[0] - pData[1];
+		frameNoise[n][1] = pData[2] - pData[3];
+		frameNoise[n][2] = pData[4] - pData[5];
+		frameNoise[n][3] = pData[6] - pData[7];
+		frameNoise[n][4] = pData[8] - pData[9];
+		frameNoise[n][5] = pData[10] - pData[11];
+		GPIOB->BSRR |= (1<<27);
+		GPIOA->BSRR |= (1<<4);
+		//HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET);
+
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+
+		while(spi4_f == 0){}
+		spi4_f = 0;
+		frameNoise[n][6] = pData1[0] - pData1[1];
+		frameNoise[n][7] = pData1[2] - pData1[3];
+		frameNoise[n][8] = pData1[4] - pData1[5];
+		frameNoise[n][9] = pData1[6] - pData1[7];
+		frameNoise[n][10] = pData1[8] - pData1[9];
+		frameNoise[n][11] = pData1[10] - pData1[11];
+
+		GPIOE->BSRR |= (1<<11);
+		//HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_SET);
+
+
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+		asm("NOP");
+
+		while(spi6_f == 0){}
+		spi6_f = 0;
+		frameNoise[n][12] = pData2[0] - pData2[1];
+		frameNoise[n][13] = pData2[2] - pData2[3];
+		frameNoise[n][14] = pData2[4] - pData2[5];
+		frameNoise[n][15] = pData2[6] - pData2[7];
+		frameNoise[n][16] = pData2[8] - pData2[9];
+		frameNoise[n][17] = pData2[10] - pData2[11];
+
+		GPIOG->BSRR |= (1<<8);
+		//HAL_GPIO_WritePin(CS3_GPIO_Port, CS3_Pin, GPIO_PIN_SET);
+
+//		if(spi1_f == 0 && spi4_f == 0 && spi6_f == 0){}
+//		spi1_f = 0;spi4_f = 0;spi6_f = 0;
+//		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_SET);
+//		HAL_GPIO_WritePin(CS3_GPIO_Port, CS3_Pin, GPIO_PIN_SET);
+
+		//=== RESET ACCUMULATOR ===
+		portCTRL->BSRR |= (1<<pinRSTACCH)| (1<<pinCFB1H);// | (1<<pinCFB1H) | (1<<pinCFB2H);	//ACCRST ON PB6
+
+
+		portMSTR->BSRR |= (1<<pinMSTRL);	//MSTR OFF PC6
+		//portCS->BSRR |= (1<<pinCS2L);	// SS2 OFF PB12
+		//===========================================================//
+	} while(n++ < 4);
 }
 
 /* USER CODE END PFP */
@@ -806,22 +1283,7 @@ int main(void)
 			  //nTx_f  	= AfeCmd.u8_txCnt;
 			  numAcc_f 	= AfeCmd.u8_accCnt;
 			  Vref_f 	= AfeCmd.u8_isVref;
-			  initTx_f 	= 0;
-
-			  initTx_f = 1; nTx_f = 4;
-			  Run_Scans(0, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
-
-			  initTx_f = 5; nTx_f = 8;
-			  Run_Scans(1, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
-
-			  initTx_f = 9; nTx_f = 12;
-			  Run_Scans(2, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
-
-			  initTx_f = 13; nTx_f = 16;
-			  Run_Scans(3, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
-
-			  s16p_buf   = (int16_t*) frame;
-			  u16_bufLen = sizeof(frame);
+			  Run_NoiseScans(numAcc_f, Vref_f);
 			  break;
 
 		  case AFE_CMD_SCAN_SELF_TX:
