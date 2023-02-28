@@ -10,7 +10,7 @@ extern "C" {
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Private defines -----------------------------------------------------------*/
+/* Exported macros -----------------------------------------------------------*/
 
 /*******************************************************************************
  * @brief   SPI Write Packet Bytes
@@ -19,39 +19,66 @@ extern "C" {
 //Byte 0
 #define SPI_MODE_BYTE							0x00
 
-#define SPI_WRITE_REQ							0x05
-#define SPI_READ_REQ							0x0A
-
-
 //Byte 1 - WRITE COMMAND
 #define SPI_WRITE_CMD_BYTE						0x01
-
-#define SPI_SCAN_ON								0x10		//Scan ON.
-#define SPI_SCAN_OFF							0x11		//Scan OFF.
-#define SPI_SCAN_NOISE							0x12		//Start Scan Noise.
-#define SPI_SCAN_SELF_TX						0x13		//Start Scan Self TX.
-#define SPI_SCAN_SELF_RX						0x14		//Start Scan Self RX.
-#define SPI_SCAN_MUTUAL							0x15		//Start Scan Mutual.
-
 
 //Byte 2 - WRITE PARAMETER
 #define SPI_WRITE_PRM_BYTE						0x02
 
-/* Private typedef -----------------------------------------------------------*/
+/* Exported enum -------------------------------------------------------------*/
+typedef enum
+{
+	AFE_REQ_WRITE = 0x05,
+	AFE_REQ_READ  = 0x0A,
+} eAFE_REQ;
+
+typedef enum
+{
+	AFE_CMD_ON = 0x10,
+	AFE_CMD_OFF,
+	AFE_CMD_SCAN_NOISE,
+	AFE_CMD_SCAN_SELF_TX,
+	AFE_CMD_SCAN_SELF_RX,
+	AFE_CMD_SCAN_MUTUAL,
+} eAFE_CMD;
+
+typedef enum
+{
+	AFE_FREQ_500_KHz,
+	AFE_FREQ_400_KHz,
+	AFE_FREQ_250_KHz,
+	AFE_FREQ_100_KHz
+} eAFE_FREQ;
+
+
+/* Exported struct -----------------------------------------------------------*/
 typedef struct
 {
 	union {
 		uint8_t u8_data[10];
 		struct {
-			uint8_t u8_modeRW;
-			uint8_t u8_scanType;
-			uint8_t u8_vRef;
-			uint8_t u8_freq;
+			eAFE_REQ u8_mode;
+			eAFE_CMD u8_cmd;
+			eAFE_FREQ u8_freq;
 			uint8_t u8_txCnt;
 			uint8_t u8_accCnt;
+
+			uint8_t u8_isVref:1;
+			uint8_t u8_isDiff:1;
 		};
 	};
 } sAfeCmd_t;
+
+typedef struct
+{
+	union {
+		uint8_t u8_data[2];
+		struct {
+			uint8_t u8_isOk;
+			eAFE_CMD u8_cmd;
+		};
+	};
+} sAfeReply_t;
 
 #ifdef __cplusplus
 }
