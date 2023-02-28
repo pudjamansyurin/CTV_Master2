@@ -55,34 +55,43 @@ typedef enum
 
 
 /* Exported struct -----------------------------------------------------------*/
+/*
+ * AFE command structure
+ */
 typedef struct
 {
 	union {
-		uint8_t u8_data[10];
+		int16_t s16_data[5];
 		struct {
-			eAFE_REQ u8_mode;
-			eAFE_CMD u8_cmd;
-			eAFE_FREQ u8_freq;
-			uint8_t u8_txCnt;
-			uint8_t u8_accCnt;
+			uint8_t u8_mode;		/* eAFE_REQ - request type */
+			uint8_t u8_cmd;			/* eAFE_CMD - command type */
+			uint8_t u8_freq;		/* eAFE_FREQ - scan frequency */
+			uint8_t u8_txCnt;		/* number of tx for scan */
+			uint8_t u8_accCnt;		/* number of accumulation pulse */
 
-			uint8_t u8_isVref:1;
-			uint8_t u8_isDiff:1;
+			uint8_t u8_isVref:1;	/* floating voltage reference */
+			uint8_t u8_isDiff:1;	/* differential/single-ended mode */
 		};
 	};
 } sAfeCmd_t;
 
+/*
+ * AFE reply header structure
+ */
 typedef struct
 {
 	union {
-		uint8_t u8_data[2];
+		int16_t s16_data[2];
 		struct {
-			uint8_t u8_isOk;
-			eAFE_CMD u8_cmd;
+			uint8_t  u8_cmd;		/* eAFE_CMD - command type */
+			uint16_t u16_len;		/* payload's size in half-word */
 		};
 	};
 } sAfeHeader_t;
 
+/*
+ * AFE reply structure
+ */
 typedef struct
 {
 	sAfeHeader_t	header;
