@@ -77,9 +77,6 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-#define TX_LEN		16
-#define RX_LEN		18
-#define FREQ_CNT	4
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -123,7 +120,7 @@ volatile uint8_t spi1_f=0, spi4_f=0, spi6_f=0, spi2_f=0, spi2t_f=0;
 
 int pData[12],pData1[12],pData2[12],temp_pData[12];
 
-int16_t frame[(sizeof(sAfeReply_t)/sizeof(int16_t)) + TX_LEN*RX_LEN];
+sAfeReply_t AfeReply;
 int16_t SelfTx[TX_LEN], SelfRx[RX_LEN];
 
 
@@ -1217,10 +1214,8 @@ uint16_t Run_NoiseScans(uint8_t nAcc, uint8_t vreff, int16_t* s16p_frame)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
-	int16_t* s16p_buf;
-	uint16_t u16_bufLen;
 	sAfeCmd_t AfeCmd;
-	sAfeReply_t* p_AfeReply;
+	uint16_t u16_bufLen;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -1269,10 +1264,6 @@ int main(void)
   for(b=0;b<TX_LEN;b++)	SelfTx[b] = b*10;
   for(b=0;b<RX_LEN;b++)	SelfRx[b] = b*10;
 
-  // reply header
-  p_AfeReply = (sAfeReply_t*) &frame[0];
-  s16p_buf 	 = &frame[sizeof(sAfeReply_t)/sizeof(int16_t)];
-
   while (1)
   {
 	  // wait command from host
@@ -1291,12 +1282,9 @@ int main(void)
 			  numAcc_f 	= AfeCmd.u8_accCnt;
 			  Vref_f 	= AfeCmd.u8_isVref;
 
-			  u16_bufLen = Run_NoiseScans(numAcc_f, Vref_f, s16p_buf);
-
-			  if (AfeCmd.u8_isDiff)
-			  {
-				  // change to differential
-			  }
+			  u16_bufLen = Run_NoiseScans(numAcc_f,
+				  	  	  	  	  	  	  Vref_f,
+										  AfeReply.s16_buf);
 			  break;
 
 		  case AFE_CMD_SCAN_SELF_TX:
@@ -1308,16 +1296,16 @@ int main(void)
 			  // dummy process
 			  HAL_Delay(1);
 
-			  s16p_buf   = SelfTx;
 			  u16_bufLen = nTx_f * sizeof(int16_t);
+			  memcpy(AfeReply.s16_buf, SelfTx, u16_bufLen);
 			  break;
 
 		  case AFE_CMD_SCAN_SELF_RX:
 			  // dummy process
 			  HAL_Delay(1);
 
-			  s16p_buf   = SelfRx;
 			  u16_bufLen = sizeof(SelfRx);
+			  memcpy(AfeReply.s16_buf, SelfRx, u16_bufLen);
 			  break;
 
 		  case AFE_CMD_SCAN_MUTUAL:
@@ -1332,7 +1320,7 @@ int main(void)
 									 nTx_f,
 									 numAcc_f,
 									 Vref_f,
-									 s16p_buf);
+									 AfeReply.s16_buf);
 			  break;
 
 		  default:
@@ -1341,14 +1329,14 @@ int main(void)
 	  }
 
 	  // inject header
-	  p_AfeReply->u8_isOk = (NULL != s16p_buf);
-	  p_AfeReply->u8_cmd  = AfeCmd.u8_cmd;
-	  u16_bufLen += sizeof(sAfeReply_t);
+	  AfeReply.header.u8_isOk = (0 < u16_bufLen);
+	  AfeReply.header.u8_cmd  = AfeCmd.u8_cmd;
+	  u16_bufLen += sizeof(sAfeHeader_t);
 
 	  // send scan result
 	  spi2t_f = 0;
 	  HAL_SPI_Transmit_IT(&hspi2,
-		  	  	  	  	  (uint8_t*) frame,
+		  	  	  	  	  (uint8_t*) &AfeReply,
 						  u16_bufLen / sizeof(int16_t));
 	  GPIOB->BSRR |= (1<<8);
 	  GPIOB->BSRR |= (1<<24);
