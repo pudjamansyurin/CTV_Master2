@@ -11,6 +11,9 @@ extern "C" {
 #include "main.h"
 
 /* Exported macros -----------------------------------------------------------*/
+#define TX_LEN		16
+#define RX_LEN		18
+#define FREQ_CNT	4
 
 /*******************************************************************************
  * @brief   SPI Write Packet Bytes
@@ -78,6 +81,12 @@ typedef struct
 			eAFE_CMD u8_cmd;
 		};
 	};
+} sAfeHeader_t;
+
+typedef struct
+{
+	sAfeHeader_t	header;
+	int16_t 		s16_buf[TX_LEN*RX_LEN];
 } sAfeReply_t;
 
 #ifdef __cplusplus
