@@ -77,7 +77,8 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-
+#define TX_LEN		16
+#define RX_LEN		18
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -97,7 +98,17 @@ DMA_HandleTypeDef hdma_usart1_rx;
 
 /* USER CODE BEGIN PV */
 //From GUI
-uint8_t run_f = 0, Vref_f = 0, Freq_f = 0, Baseline_f = 0, initTx_f=0, nTx_f = 16, numAcc_f = 64, prev_Freq, dest_USART = 0, dest_SPI = 0, dest_I2C = 0;
+uint8_t run_f = 0,
+		Vref_f = 0,
+		Freq_f = 0,
+		Baseline_f = 0,
+		initTx_f=0,
+		nTx_f = TX_LEN,
+		numAcc_f = 64,
+		prev_Freq,
+		dest_USART = 0,
+		dest_SPI = 0,
+		dest_I2C = 0;
 uint8_t vfreq, vnTx = 10, vnAcc, vVref;
 
 //TX Pin
@@ -110,11 +121,10 @@ unsigned char i,j;
 volatile uint8_t spi1_f=0, spi4_f=0, spi6_f=0, spi2_f=0, spi2t_f=0;
 
 int pData[12],pData1[12],pData2[12],temp_pData[12];
-int16_t frame[16][18],framedata[16][18],baseline[16][18];	//[TX][RX]
-int16_t SelfTx[16],SelfRx[18];
-int baseline1[16][18],baseline2[16][18],baseline3[16][18],baseline4[16][18],baseline5[16][18],baseline6[16][18],baseline7[16][18],baseline8[16][18],baseline9[16][18];
+int16_t frame[(sizeof(sAfeReply_t) + TX_LEN*RX_LEN) / sizeof(int16_t)];
+int16_t SelfTx[TX_LEN], SelfRx[RX_LEN];
 
-char str_Frame[1731]={'*'}; //1+6*16*18+2 -> *+dataaaaa+&+\n
+char str_Frame[1731]={'*'}; //1+6*16*18+2 -> *+data+&+\n
 #define slave_addr (0x11<<1)
 /* USER CODE END PV */
 
@@ -549,12 +559,16 @@ void Run_TX(int freq, int ch)
 }
 
 //NEW Run scan 500khz 3 slave
-void Run_Scans(uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t vreff)
+void Run_Scans(uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t vreff, int16_t* s16p_frame)
 {
+	int16_t* s16p_frameN;
 	uint8_t n=initTx;
 	uint8_t o=initTx+nTx-1;
+
 	do
 	{
+		s16p_frameN = s16p_frame + (n * RX_LEN);
+
 		uint8_t m=0;
 		//========================= TX(n) =============================
 
@@ -642,13 +656,12 @@ void Run_Scans(uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t 
 		//-----------------------------------//
 		portCTRL->BSRR |= (1<<pinVREFH);	//Vref
 
-
-		frame[n][0] = pData[0] - pData[1];
-		frame[n][1] = pData[2] - pData[3];
-		frame[n][2] = pData[4] - pData[5];
-		frame[n][3] = pData[6] - pData[7];
-		frame[n][4] = pData[8] - pData[9];
-		frame[n][5] = pData[10] - pData[11];
+		s16p_frameN[0] = pData[0] - pData[1];
+		s16p_frameN[1] = pData[2] - pData[3];
+		s16p_frameN[2] = pData[4] - pData[5];
+		s16p_frameN[3] = pData[6] - pData[7];
+		s16p_frameN[4] = pData[8] - pData[9];
+		s16p_frameN[5] = pData[10] - pData[11];
 		GPIOB->BSRR |= (1<<27);
 		GPIOA->BSRR |= (1<<4);
 		//HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET);
@@ -662,12 +675,12 @@ void Run_Scans(uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t 
 
 		while(spi4_f == 0){}
 		spi4_f = 0;
-		frame[n][6] = pData1[0] - pData1[1];
-		frame[n][7] = pData1[2] - pData1[3];
-		frame[n][8] = pData1[4] - pData1[5];
-		frame[n][9] = pData1[6] - pData1[7];
-		frame[n][10] = pData1[8] - pData1[9];
-		frame[n][11] = pData1[10] - pData1[11];
+		s16p_frameN[6] = pData1[0] - pData1[1];
+		s16p_frameN[7] = pData1[2] - pData1[3];
+		s16p_frameN[8] = pData1[4] - pData1[5];
+		s16p_frameN[9] = pData1[6] - pData1[7];
+		s16p_frameN[10] = pData1[8] - pData1[9];
+		s16p_frameN[11] = pData1[10] - pData1[11];
 
 		GPIOE->BSRR |= (1<<11);
 		//HAL_GPIO_WritePin(CS2_GPIO_Port, CS2_Pin, GPIO_PIN_SET);
@@ -682,12 +695,12 @@ void Run_Scans(uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t 
 
 		while(spi6_f == 0){}
 		spi6_f = 0;
-		frame[n][12] = pData2[0] - pData2[1];
-		frame[n][13] = pData2[2] - pData2[3];
-		frame[n][14] = pData2[4] - pData2[5];
-		frame[n][15] = pData2[6] - pData2[7];
-		frame[n][16] = pData2[8] - pData2[9];
-		frame[n][17] = pData2[10] - pData2[11];
+		s16p_frameN[12] = pData2[0] - pData2[1];
+		s16p_frameN[13] = pData2[2] - pData2[3];
+		s16p_frameN[14] = pData2[4] - pData2[5];
+		s16p_frameN[15] = pData2[6] - pData2[7];
+		s16p_frameN[16] = pData2[8] - pData2[9];
+		s16p_frameN[17] = pData2[10] - pData2[11];
 
 		GPIOG->BSRR |= (1<<8);
 		//HAL_GPIO_WritePin(CS3_GPIO_Port, CS3_Pin, GPIO_PIN_SET);
@@ -700,9 +713,6 @@ void Run_Scans(uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t 
 
 		//=== RESET ACCUMULATOR ===
 		portCTRL->BSRR |= (1<<pinRSTACCH)| (1<<pinCFB1H);// | (1<<pinCFB1H) | (1<<pinCFB2H);	//ACCRST ON PB6
-
-		sprintf(str_Frame,"%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#%5d#",frame[n][0],frame[n][1],frame[n][2],frame[n][3],frame[n][4],frame[n][5],frame[n][6],frame[n][7],frame[n][8],frame[n][9],frame[n][10],frame[n][11],frame[n][12],frame[n][13],frame[n][14],frame[n][15],frame[n][16],frame[n][17]);
-
 		portMSTR->BSRR |= (1<<pinMSTRL);	//MSTR OFF PC6
 		//portCS->BSRR |= (1<<pinCS2L);	// SS2 OFF PB12
 		//===========================================================//
@@ -726,6 +736,7 @@ int main(void)
 	int16_t* s16p_buf;
 	uint16_t u16_bufLen;
 	sAfeCmd_t AfeCmd;
+	sAfeReply_t* p_AfeReply;
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -771,14 +782,15 @@ int main(void)
   HAL_UART_Receive_DMA(&huart1, (uint8_t *)Rx_UART, 100);
 
   uint8_t b;
-  for(b=0;b<16;b++)	SelfTx[b] = b*10;
-  for(b=0;b<18;b++)	SelfRx[b] = b*10;
+  for(b=0;b<TX_LEN;b++)	SelfTx[b] = b*10;
+  for(b=0;b<RX_LEN;b++)	SelfRx[b] = b*10;
+
+  // reply header
+  p_AfeReply = (sAfeReply_t*) &frame[0];
+  s16p_buf 	 = &frame[sizeof(sAfeReply_t)/sizeof(int16_t)];
 
   while (1)
   {
-	  s16p_buf = NULL;
-	  u16_bufLen = 0;
-
 	  // wait command from host
 	  spi2_f = 0;
 	  HAL_SPI_Receive_IT(&hspi2,
@@ -787,62 +799,81 @@ int main(void)
 	  while(0 == spi2_f) {};
 
 	  // process command
-	  switch (AfeCmd.u8_scanType)
+	  switch (AfeCmd.u8_cmd)
 	  {
-		  case SPI_SCAN_NOISE:
+		  case AFE_CMD_SCAN_NOISE:
+			  //Freq_f 	= AfeCmd.u8_freq;
+			  //nTx_f  	= AfeCmd.u8_txCnt;
+			  numAcc_f 	= AfeCmd.u8_accCnt;
+			  Vref_f 	= AfeCmd.u8_isVref;
+			  initTx_f 	= 0;
+
 			  initTx_f = 1; nTx_f = 4;
-			  Run_Scans(0, initTx_f, nTx_f, numAcc_f, Vref_f);
+			  Run_Scans(0, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
 
 			  initTx_f = 5; nTx_f = 8;
-			  Run_Scans(1, initTx_f, nTx_f, numAcc_f, Vref_f);
+			  Run_Scans(1, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
 
 			  initTx_f = 9; nTx_f = 12;
-			  Run_Scans(2, initTx_f, nTx_f, numAcc_f, Vref_f);
+			  Run_Scans(2, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
 
 			  initTx_f = 13; nTx_f = 16;
-			  Run_Scans(3, initTx_f, nTx_f, numAcc_f, Vref_f);
+			  Run_Scans(3, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
 
 			  s16p_buf   = (int16_t*) frame;
 			  u16_bufLen = sizeof(frame);
 			  break;
 
-		  case SPI_SCAN_SELF_TX:
-			  HAL_Delay(5);	// dummy wait
+		  case AFE_CMD_SCAN_SELF_TX:
+			  //Freq_f 	= AfeCmd.u8_freq;
+			  nTx_f  	= AfeCmd.u8_txCnt;
+			  //numAcc_f 	= AfeCmd.u8_accCnt;
+			  //Vref_f 	= AfeCmd.u8_isVref;
+
+			  // dummy process
+			  HAL_Delay(1);
 
 			  s16p_buf   = SelfTx;
-			  u16_bufLen = nTx_f*sizeof(int16_t);
+			  u16_bufLen = nTx_f * sizeof(int16_t);
 			  break;
 
-		  case SPI_SCAN_SELF_RX:
-			  HAL_Delay(5);	// dummy wait
+		  case AFE_CMD_SCAN_SELF_RX:
+			  // dummy process
+			  HAL_Delay(1);
 
 			  s16p_buf   = SelfRx;
 			  u16_bufLen = sizeof(SelfRx);
 			  break;
 
-		  case SPI_SCAN_MUTUAL:
-			  initTx_f = 0;
-			  Run_Scans(Freq_f, initTx_f, nTx_f, numAcc_f, Vref_f);
+		  case AFE_CMD_SCAN_MUTUAL:
+			  Freq_f 	= AfeCmd.u8_freq;
+			  nTx_f  	= AfeCmd.u8_txCnt;
+			  numAcc_f 	= AfeCmd.u8_accCnt;
+			  Vref_f 	= AfeCmd.u8_isVref;
+			  initTx_f 	= 0;
 
-			  s16p_buf =  (int16_t*)frame;
+			  Run_Scans(Freq_f, initTx_f, nTx_f, numAcc_f, Vref_f, s16p_buf);
 			  u16_bufLen = sizeof(frame);
 			  break;
 
 		  default:
+			  u16_bufLen = 0;
 			  break;
 	  }
 
+	  // inject header
+	  p_AfeReply->u8_isOk = (NULL != s16p_buf);
+	  p_AfeReply->u8_cmd  = AfeCmd.u8_cmd;
+	  u16_bufLen += sizeof(sAfeReply_t);
+
 	  // send scan result
-	  if (NULL != s16p_buf)
-	  {
-		  spi2t_f = 0;
-		  HAL_SPI_Transmit_IT(&hspi2,
-			  	  	  	     (uint8_t*) s16p_buf,
-							 u16_bufLen/sizeof(int16_t));
-		  GPIOB->BSRR |= (1<<8);
-		  GPIOB->BSRR |= (1<<24);
-		  while(spi2t_f == 0){}
-	  }
+	  spi2t_f = 0;
+	  HAL_SPI_Transmit_IT(&hspi2,
+		  	  	  	  	  (uint8_t*) frame,
+						  u16_bufLen / sizeof(int16_t));
+	  GPIOB->BSRR |= (1<<8);
+	  GPIOB->BSRR |= (1<<24);
+	  while(spi2t_f == 0){}
 
     /* USER CODE END WHILE */
 
