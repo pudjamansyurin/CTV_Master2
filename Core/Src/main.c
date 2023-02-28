@@ -103,7 +103,7 @@ uint8_t run_f = 0,
 		initTx_f=0,
 		nTx_f = TX_LEN,
 		numAcc_f = 64,
-		prev_Freq,
+		Diff_f = 0,
 		dest_USART = 0,
 		dest_SPI = 0,
 		dest_I2C = 0;
@@ -871,7 +871,7 @@ void Run_NoiseTX(int freq, int ch)
 }
 
 //NEW Run scan 500khz 3 slave
-uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t vreff)
+uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nTx, uint8_t nAcc, uint8_t vreff, uint8_t diff)
 {
 	int16_t	(*s16_frame)[RX_LEN];
 	uint8_t n=initTx;
@@ -1015,6 +1015,14 @@ uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nT
 		s16_frame[n][17] = pData2[10] - pData2[11];
 
 		GPIOG->BSRR |= (1<<8);
+
+		if(0 != diff)
+		{
+			for(int c=RX_LEN; c>0; c--)
+			{
+				s16_frame[n][c] = s16_frame[n][c] - s16_frame[n][c-1];
+			}
+		}
 		//HAL_GPIO_WritePin(CS3_GPIO_Port, CS3_Pin, GPIO_PIN_SET);
 
 //		if(spi1_f == 0 && spi4_f == 0 && spi6_f == 0){}
@@ -1035,7 +1043,7 @@ uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nT
 }
 
 //NEW Noise Scan
-uint16_t Run_NoiseScans(int16_t* s16p_frame, uint8_t nAcc, uint8_t vreff)
+uint16_t Run_NoiseScans(int16_t* s16p_frame, uint8_t nAcc, uint8_t vreff, uint8_t diff)
 {
 	int16_t	(*s16_frame)[RX_LEN];
 	uint8_t n=0;
@@ -1181,6 +1189,13 @@ uint16_t Run_NoiseScans(int16_t* s16p_frame, uint8_t nAcc, uint8_t vreff)
 		GPIOG->BSRR |= (1<<8);
 		//HAL_GPIO_WritePin(CS3_GPIO_Port, CS3_Pin, GPIO_PIN_SET);
 
+		if(0 != diff)
+		{
+			for(int c=RX_LEN; c>0; c--)
+			{
+				s16_frame[n][c] = s16_frame[n][c] - s16_frame[n][c-1];
+			}
+		}
 //		if(spi1_f == 0 && spi4_f == 0 && spi6_f == 0){}
 //		spi1_f = 0;spi4_f = 0;spi6_f = 0;
 //		HAL_GPIO_WritePin(CS1_GPIO_Port, CS1_Pin, GPIO_PIN_SET);
@@ -1287,10 +1302,12 @@ int main(void)
 			  //nTx_f  	= AfeCmd.u8_txCnt;
 			  numAcc_f 	= AfeCmd.u8_accCnt;
 			  Vref_f 	= AfeCmd.u8_isVref;
+			  Diff_f	= AfeCmd.u8_isDiff;
 
 			  u16_bufLen = Run_NoiseScans(AfeReply.s16_buf,
 				  	  	  	  	  	  	  numAcc_f,
-				  	  	  	  	  	  	  Vref_f);
+				  	  	  	  	  	  	  Vref_f,
+										  Diff_f);
 			  break;
 
 		  case AFE_CMD_SCAN_SELF_TX:
@@ -1317,6 +1334,7 @@ int main(void)
 			  nTx_f  	= AfeCmd.u8_txCnt;
 			  numAcc_f 	= AfeCmd.u8_accCnt;
 			  Vref_f 	= AfeCmd.u8_isVref;
+			  Diff_f	= AfeCmd.u8_isDiff;
 			  initTx_f 	= 0;
 
 			  u16_bufLen = Run_Scans(AfeReply.s16_buf,
@@ -1324,7 +1342,8 @@ int main(void)
 				  	  	  	  	  	 initTx_f,
 									 nTx_f,
 									 numAcc_f,
-									 Vref_f);
+									 Vref_f,
+									 Diff_f);
 			  break;
 
 		  default:
