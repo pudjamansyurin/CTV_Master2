@@ -1209,7 +1209,7 @@ uint16_t Run_NoiseScans(int16_t* s16p_frame, uint8_t nAcc, uint8_t vreff, uint8_
 		portMSTR->BSRR |= (1<<pinMSTRL);	//MSTR OFF PC6
 		//portCS->BSRR |= (1<<pinCS2L);	// SS2 OFF PB12
 		//===========================================================//
-	} while(n++ < FREQ_CNT);
+	} while(n++ < FREQ_CNT-1);
 
 	return (FREQ_CNT * RX_LEN);
 }
@@ -1364,6 +1364,8 @@ int main(void)
 	  GPIOB->BSRR |= (1<<8);
 	  GPIOB->BSRR |= (1<<24);
 	  while(spi2t_f == 0){}
+
+	  asm("NOP");
 
     /* USER CODE END WHILE */
 
@@ -1888,6 +1890,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 //	if(Baseline_f == 1 && Freq_f != prev_Freq)	  Collect_Baseline();
 //	prev_Freq = Freq_f;
 
+}
+
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef * hspi)
+{
+	if(hspi->Instance == SPI2)
+	{
+		asm("NOP");
+	}
 }
 
 void HAL_SPI_TxCpltCallback(SPI_HandleTypeDef * hspi)
