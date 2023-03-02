@@ -14,6 +14,7 @@ extern "C" {
 #define TX_LEN		16
 #define RX_LEN		18
 #define FREQ_CNT	4
+#define ARR_SZ(X)   (sizeof(X)/sizeof(X[0]))
 
 /*******************************************************************************
  * @brief   SPI Write Packet Bytes

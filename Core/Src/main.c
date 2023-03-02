@@ -1039,7 +1039,7 @@ uint16_t Run_Scans(int16_t* s16p_frame, uint8_t freq, uint8_t initTx, uint8_t nT
 		//===========================================================//
 	} while(n++ < o);
 
-	return (TX_LEN * RX_LEN);
+	return (nTx * RX_LEN);
 }
 
 //NEW Noise Scan
@@ -1223,6 +1223,9 @@ static uint16_t Run_SelfScans(int16_t* s16p_buf, uint16_t u16_len)
 		s16p_buf[u16_i] = u16_i*10;
 	}
 
+    // dummy process
+    HAL_Delay(1);
+
 	return (u16_len);
 }
 /* USER CODE END PFP */
@@ -1240,7 +1243,10 @@ int main(void)
 {
   /* USER CODE BEGIN 1 */
 	sAfeCmd_t AfeCmd;
+	sAfeHeader_t* p_AfeHeader;
 	uint16_t u16_bufLen;
+
+	p_AfeHeader = &(AfeReply.header);
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -1291,7 +1297,7 @@ int main(void)
 	  spi2_f = 0;
 	  HAL_SPI_Receive_IT(&hspi2,
 		  	  	  	  	 (uint8_t*) &AfeCmd,
-		  	  	  	  	 sizeof(sAfeCmd_t)/sizeof(int16_t));
+						 ARR_SZ(AfeCmd.s16_data));
 	  while(0 == spi2_f) {};
 
 	  // process command
@@ -1316,16 +1322,10 @@ int main(void)
 			  //numAcc_f 	= AfeCmd.u8_accCnt;
 			  //Vref_f 	= AfeCmd.u8_isVref;
 
-			  // dummy process
-			  HAL_Delay(1);
-
 			  u16_bufLen = Run_SelfScans(AfeReply.s16_buf, nTx_f);
 			  break;
 
 		  case AFE_CMD_SCAN_SELF_RX:
-			  // dummy process
-			  HAL_Delay(1);
-
 			  u16_bufLen = Run_SelfScans(AfeReply.s16_buf, RX_LEN);
 			  break;
 
@@ -1352,9 +1352,9 @@ int main(void)
 	  }
 
 	  // inject header
-	  AfeReply.header.u8_cmd  = AfeCmd.u8_cmd;
-	  AfeReply.header.u16_len = u16_bufLen;
-	  u16_bufLen += sizeof(sAfeHeader_t) / sizeof(int16_t);
+	  p_AfeHeader->u8_cmd  = AfeCmd.u8_cmd;
+	  p_AfeHeader->u16_len = u16_bufLen;
+	  u16_bufLen += ARR_SZ(p_AfeHeader->s16_data);
 
 	  // send scan result
 	  spi2t_f = 0;
