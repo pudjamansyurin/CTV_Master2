@@ -1360,10 +1360,18 @@ int main(void)
 	  spi2t_f = 0;
 	  HAL_SPI_Transmit_IT(&hspi2,
 		  	  	  	  	  (uint8_t*) &AfeReply,
-						  u16_bufLen);
+						  u16_bufLen); //u16_bufLen
 	  GPIOB->BSRR |= (1<<8);
+	  asm("NOP");
+	  asm("NOP");
+	  asm("NOP");
+	  asm("NOP");
+	  asm("NOP");
+	  asm("NOP");
+	  asm("NOP");
 	  GPIOB->BSRR |= (1<<24);
 	  while(spi2t_f == 0){}
+
 
 	  asm("NOP");
 
@@ -1742,10 +1750,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, MSTR_Pin|CS1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, RSV1_Pin|GPIO_PIN_8, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOG, LED_Pin|CS3_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOG, LED_Pin|CS3_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_8, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : ACCP_Pin ACCN_Pin CFB1_Pin CFB2_Pin
                            CINJN_Pin PE7 CINJP_Pin CS2_Pin
@@ -1828,12 +1836,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOE, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : RSV1_Pin */
-  GPIO_InitStruct.Pin = RSV1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  /*Configure GPIO pin : PB11 */
+  GPIO_InitStruct.Pin = GPIO_PIN_11;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(RSV1_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PD10 PD11 PD12 PD13
                            PD14 PD15 PD0 PD1
@@ -1857,13 +1864,33 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin : PB8 */
   GPIO_InitStruct.Pin = GPIO_PIN_8;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 
 /* USER CODE BEGIN 4 */
+
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  if(GPIO_Pin == TX11_Pin)
+  {
+	  spi2_f = 0;
+	  GPIOB->BSRR |= (1<<24);
+	  HAL_SPI_DeInit(&hspi2);
+	  HAL_SPI_DeInit(&hspi1);
+	  HAL_SPI_DeInit(&hspi4);
+	  HAL_SPI_DeInit(&hspi6);
+	  HAL_NVIC_SystemReset();
+  }
+}
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	run_f = Rx_UART[1] - 48;

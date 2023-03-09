@@ -109,8 +109,6 @@ void Error_Handler(void);
 #define CINJP_GPIO_Port GPIOE
 #define CS2_Pin GPIO_PIN_11
 #define CS2_GPIO_Port GPIOE
-#define RSV1_Pin GPIO_PIN_11
-#define RSV1_GPIO_Port GPIOB
 #define LED_Pin GPIO_PIN_5
 #define LED_GPIO_Port GPIOG
 #define CS3_Pin GPIO_PIN_8
