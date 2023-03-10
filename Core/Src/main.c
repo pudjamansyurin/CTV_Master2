@@ -104,9 +104,7 @@ uint8_t run_f = 0,
 		nTx_f = TX_LEN,
 		numAcc_f = 64,
 		Diff_f = 0,
-		dest_USART = 0,
-		dest_SPI = 0,
-		dest_I2C = 0;
+		EXTI11_f = 0;
 uint8_t vfreq, vnTx = 10, vnAcc, vVref;
 
 //TX Pin
@@ -1351,6 +1349,18 @@ int main(void)
 			  break;
 	  }
 
+	  if(1 == EXTI11_f)
+	  {
+		  EXTI11_f = 0;
+		  spi2_f = 0;
+		  GPIOB->BSRR |= (1<<24);
+		  HAL_SPI_DeInit(&hspi2);
+		  HAL_SPI_DeInit(&hspi1);
+		  HAL_SPI_DeInit(&hspi4);
+		  HAL_SPI_DeInit(&hspi6);
+		  HAL_NVIC_SystemReset();
+	  }
+
 	  // inject header
 	  p_AfeHeader->u8_cmd  = AfeCmd.u8_cmd;
 	  p_AfeHeader->u16_len = u16_bufLen;
@@ -1881,13 +1891,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if(GPIO_Pin == TX11_Pin)
   {
-	  spi2_f = 0;
-	  GPIOB->BSRR |= (1<<24);
-	  HAL_SPI_DeInit(&hspi2);
-	  HAL_SPI_DeInit(&hspi1);
-	  HAL_SPI_DeInit(&hspi4);
-	  HAL_SPI_DeInit(&hspi6);
-	  HAL_NVIC_SystemReset();
+	  EXTI11_f = 1;
   }
 }
 
@@ -1899,9 +1903,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	Baseline_f = Rx_UART[4] - 48;
 	nTx_f = Rx_UART[5] - 48;
 	numAcc_f = Rx_UART[6] - 48;
-	dest_USART = Rx_UART[7] - 48;
-	dest_SPI = Rx_UART[8] - 48;
-	dest_I2C = Rx_UART[9] - 48;
+
 
 	//New Init
 //	spi1_f = 0;
